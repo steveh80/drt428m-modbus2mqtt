@@ -3,7 +3,7 @@
 import serial
 import minimalmodbus
 import json
-import paho.mqtt.publish as mqtt
+import paho.mqtt.client as mqtt
 import time
 import os
 
@@ -12,6 +12,12 @@ mqtt_server = os.environ['MQTT_SERVER']
 mqtt_topic = os.environ['MQTT_TOPIC']
 mqtt_user = os.environ['MQTT_USER']
 mqtt_pwd = os.environ['MQTT_PWD']
+
+
+client = mqtt.Client()
+client.username_pw_set(mqtt_user, password=mqtt_pwd)
+client.connect(mqtt_server)
+client.loop_start()
 
 
 instrument = minimalmodbus.Instrument(port=device, slaveaddress=1, mode=minimalmodbus.MODE_RTU, close_port_after_each_call=True, debug=False)
@@ -50,7 +56,8 @@ def process():
  
   instrument.serial.close()
   
-  mqtt.single(mqtt_topic, payload=json.dumps(data), qos=0, retain=False, hostname=mqtt_server, port=1883, auth={'username': mqtt_user, 'password': mqtt_pwd})
+  client.publish(mqtt_topic, payload=json.dumps(data), qos=0, retain=False)
+
 
 while True:
   process()
